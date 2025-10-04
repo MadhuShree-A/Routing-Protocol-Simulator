@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Interactive Topology Builder</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; text-align: center; }
+    #network { width: 80%; height: 500px; border: 2px solid #666; margin: 20px auto; border-radius: 8px; }
+    .controls { margin: 10px; }
+    button { margin: 5px; padding: 8px 14px; border-radius: 5px; border: none; background: #007BFF; color: #fff; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    table { margin: auto; border-collapse: collapse; margin-top: 20px; }
+    td, th { border: 1px solid #333; padding: 6px 12px; }
+    h3 { margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <h2>Routing Protocol Simulator – Topology Builder</h2>
+  
+  <div class="controls">
+    <button onclick="addNode()">➕ Add Router</button>
+    <button onclick="addEdge()">🔗 Add Link</button>
+    <button onclick="removeNode()">🗑 Remove Router</button>
+    <button onclick="removeEdge()">❌ Remove Link</button>
+    <button onclick="simulate()">▶ Generate Routing Tables</button>
+  </div>
+
+  <div id="network"></div>
+  <div id="result"></div>
+
+  <script>
+    // Initial Data
+    var nodes = new vis.DataSet([]);
+    var edges = new vis.DataSet([]);
+
+    var container = document.getElementById("network");
+    var data = { nodes: nodes, edges: edges };
+
+    var options = {
+      interaction: { multiselect: true },
+      manipulation: false,
+      edges: { 
+        color: "#444",
+        smooth: false,   // straight line
+        font: { align: "top" } // show weight above link
+      },
+      physics: false,  // disable auto movement
+      layout: { improvedLayout: true }
+    };
+
+    var network = new vis.Network(container, data, options);
+
+    let nodeId = 0;
+
+    // -------- Controls --------
+    function addNode() {
+      nodes.add({
+        id: nodeId,
+        label: "R" + nodeId,
+        shape: "circle",
+        color: "#66ccff",
+        physics: false,
+        fixed: false
+      });
+      nodeId++;
+    }
+
+    function removeNode() {
+      let selected = network.getSelectedNodes();
+      if (selected.length > 0) nodes.remove(selected);
+    }
+
+    function addEdge() {
+      let selected = network.getSelectedNodes();
+      if (selected.length === 2) {
+        let weight = prompt("Enter link weight (cost):", "1");
+        if (weight !== null && !isNaN(weight)) {
+          edges.add({
+            from: selected[0],
+            to: selected[1],
+            label: weight,
+            weight: parseInt(weight)
+          });
+        }
+      } else {
+        alert("Select exactly TWO routers to connect.");
+      }
+    }
+
+    function removeEdge() {
+      let selected = network.getSelectedEdges();
+      if (selected.length > 0) edges.remove(selected);
+    }
+
+    // -------- Simulation Call --------
+    function simulate() {
+      let nodeArr = nodes.get();
+      let edgeArr = edges.get();
+
+      fetch("/simulate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ nodes: nodeArr, edges: edgeArr })
+      })
+      .then(res => res.json())
+      .then(data => {
+        window.location.href = data.redirect;
+      });
+    }
+  </script>
+</body>
+</html>

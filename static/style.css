@@ -1,0 +1,89 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+#sidebar {
+  flex: 1;
+  background: #f7f9fb;
+  padding: 15px;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+#sidebar h2 {
+  margin-top: 0;
+  font-size: 20px;
+  color: #2c3e50;
+}
+
+#sidebar form {
+  margin-bottom: 15px;
+}
+
+#sidebar label {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+#sidebar input, #sidebar select, #sidebar button {
+  width: 100%;
+  padding: 6px;
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+#sidebar button {
+  margin-top: 10px;
+  background: #2196F3;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+#sidebar button:hover {
+  background: #1976d2;
+}
+
+/* Network visualization */
+#network-container {
+  flex: 3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f6f8;
+}
+
+#network {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+/* Log panel */
+#log-panel {
+  flex: 1;
+  padding: 15px;
+  background: #2c3e50;
+  color: white;
+  overflow-y: auto;
+}
+
+#log-panel h3 {
+  margin-top: 0;
+}
+
+#log {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#log li {
+  margin: 5px 0;
+  font-size: 14px;
+}
