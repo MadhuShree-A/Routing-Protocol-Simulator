@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Visualize Routing</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin:24px; background:#fafafa; text-align:center; }
+    #network { width:85%; height:520px; margin: 16px auto; border-radius:10px; background:#fff; border:1px solid #e6e6e6;}
+    .controls { display:flex; gap:10px; justify-content:center; margin-top:12px; }
+    button { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; background:#1a73e8; color:#fff;}
+    select { padding:8px 10px; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <h2>Topology Visualization & Route Highlighting</h2>
+  <div class="controls">
+    <label>Source: <select id="sourceSelect"></select></label>
+    <label>Algorithm:
+      <select id="algoSelect">
+        <option value="dijkstra">Dijkstra (LS)</option>
+        <option value="bellmanford">Bellman-Ford (DV)</option>
+      </select>
+    </label>
+    <button onclick="highlightAll()">Highlight Paths</button>
+    <button onclick="resetColors()">Reset</button>
+    <button onclick="window.location.href='/'">Back</button>
+  </div>
+
+  <div id="network"></div>
+
+  <script>
+    // Data passed by Flask via Jinja
+    const rawNodes = {{ nodes | tojson }};
+    const rawEdges = {{ edges | tojson }};
+    const lsTables = {{ ls | tojson }};
+    const dvTables = {{ dv | tojson }};
+    const algorithmDefault = "{{ algorithm }}";
+
+    // Setup vis data
+    const nodes = new vis.DataSet(rawNodes.map(n => ({id: n.id, label: n.label || ("R"+n.id), color:"#66ccff"})));
+    const edges = new vis.DataSet(rawEdges.map((e, idx) => ({ id: idx, from: e.from, to: e.to, label: (e.weight !== undefined ? String(e.weight) : (e.label || '1')), color: {color:"#666"} })));
+    const container = document.getElementById("network");
+    const data = { nodes, edges };
+    const network = new vis.Network(container, data, { physics:false });
+
+    // Fill source select
+    const sourceSelect = document.getElementById("sourceSelect");
+    for(let i=0;i<rawNodes.length;i++){
+      const opt = document.createElement("option");
+      opt.value = rawNodes[i].id;
+      opt.text = rawNodes[i].label || ("R"+rawNodes[i].id);
+      sourceSelect.appendChild(opt);
+    }
+
+    // Setup algorithm selection default
+    const algoSelect = document.getElementById("algoSelect");
+    if(algorithmDefault === 'dijkstra') algoSelect.value = 'dijkstra';
+    if(algorithmDefault === 'bellmanford') algoSelect.value = 'bellmanford';
+
+    function resetColors(){
+      nodes.forEach(n => nodes.update({ id: n.id, color: "#66ccff" }));
+      edges.forEach(e => edges.update({ id: e.id, color: {color:"#666"} }));
+    }
+
+    function highlightAll(){
+      const src = parseInt(sourceSelect.value);
+      const algo = algoSelect.value;
+      resetColors();
+      let tableSet = algo === 'dijkstra' ? lsTables : dvTables;
+      if(!tableSet || Object.keys(tableSet).length === 0){
+        alert("No routing tables available for selected algorithm.");
+        return;
+      }
+      const table = tableSet[src];
+      if(!table){
+        alert("No table for selected source. Did you run simulation?");
+        return;
+      }
+      // For each destination highlight path edges using NextHop info.
+      table.forEach(row=>{
+        if(row.NextHop === "-" || row.Cost === "∞") return;
+        const dest = row.Destination;
+        // walk from source -> next hop -> ... -> dest using next hop chain approach:
+        // Our routing table only has NextHop for each dest relative to the source; to visualize simply highlight the first edge (source -> nextHop)
+        const firstHop = row.NextHop;
+        // highlight edge connecting src and firstHop
+        edges.forEach(e=>{
+          if( (e.from === src && e.to == firstHop) || (e.from === firstHop && e.to == src) ){
+            edges.update({ id: e.id, color: {color: "#ff8c00"} });
+          }
+          // also try highlight edge dest <-> firstHop if possible
+          if( (e.from === dest && e.to == firstHop) || (e.from === firstHop && e.to == dest) ){
+            edges.update({ id: e.id, color: {color: "#ff8c00"} });
+          }
+        });
+      });
+      // color source node
+      nodes.update({ id: src, color: "#1a73e8" });
+    }
+  </script>
+</body>
+</html>
