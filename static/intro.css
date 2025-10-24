@@ -1,0 +1,78 @@
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #4a00e0, #8e2de2);
+  color: #fff;
+  text-align: center;
+}
+
+/* Frosted Glass */
+.glass {
+  background: rgba(255,255,255,0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  padding: 25px;
+  margin: 25px auto;
+  width: 80%;
+}
+
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+}
+
+.hero-box h1 { font-size: 45px; margin-bottom: 10px; }
+.hero-box p { font-size: 18px; margin-bottom: 25px; }
+
+.start-btn {
+  background: #ffffff;
+  color: #4a00e0;
+  padding: 12px 26px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.3s;
+}
+.start-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 15px #fff;
+}
+
+.cards {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.card {
+  width: 30%;
+}
+
+.tag {
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ls { background: #4285f4; }
+.dv { background: #34a853; }
+
+.table-section table {
+  width: 90%;
+  border-collapse: collapse;
+  margin: auto;
+  color: white;
+}
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+
+footer {
+  padding: 25px;
+  font-size: 14px;
+  opacity: 0.8;
+}

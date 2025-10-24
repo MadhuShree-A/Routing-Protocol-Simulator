@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Routing Algorithm Visualizer</title>
+  <link rel="stylesheet" href="/static/intro.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <section class="hero">
+    <div class="glass hero-box">
+      <h1>Routing Algorithm Visualizer</h1>
+      <p>Understand OSPF and RIP through interactive network simulation</p>
+      <a href="/topology" class="start-btn">Start Simulation</a>
+    </div>
+  </section>
+
+  <section class="glass info">
+    <h2>What is Routing?</h2>
+    <p>Routing is the process of selecting the best path for data to travel from a source to a destination across a network.</p>
+    <p>When you send an email, load a webpage, or stream a video, your data is broken into packets. These packets must travel through multiple routers and networks to reach the destination.</p>
+  </section>
+
+  <section class="types">
+    <h2>Types of Routing Algorithms</h2>
+    <div class="cards">
+
+      <div class="glass card">
+        <h3>Link-State Routing</h3>
+        <p>Each router has a complete view of the network and computes the shortest path.</p>
+        <span class="tag ls">OSPF</span>
+      </div>
+
+      <div class="glass card">
+        <h3>Distance-Vector Routing</h3>
+        <p>Routers share information only with neighbors and update routing tables iteratively.</p>
+        <span class="tag dv">RIP</span>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="glass table-section">
+    <h2>Comparison</h2>
+    <table>
+      <tr><th>Feature</th><th>OSPF (Dijkstra)</th><th>RIP (Bellman-Ford)</th></tr>
+      <tr><td>Type</td><td>Link-State</td><td>Distance-Vector</td></tr>
+      <tr><td>Weights</td><td>Positive Only </td><td>Can be Negative </td></tr>
+      <tr><td>Metric</td><td>Cost</td><td>Hop Count</td></tr>
+      <tr><td>Convergence</td><td>Fast</td><td>Slow</td></tr>
+    </table>
+  </section>
+
+  <section class="glass algo-cards">
+    <div class="algo">
+      <h3>Dijkstra (OSPF)</h3>
+      <p>Computes shortest path using full network topology.</p>
+    </div>
+    <div class="algo">
+      <h3>Bellman-Ford (RIP)</h3>
+      <p>Updates paths via neighbor vectors, supports negative weights.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 Routing Visualizer</p>
+  </footer>
+
+</body>
+</html>

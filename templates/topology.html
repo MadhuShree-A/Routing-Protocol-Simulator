@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Routing Protocol Simulator – Topology Builder</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f9; text-align: center; margin:0; padding:24px;}
+    header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    h1 { color:#1a73e8; margin: 8px 0 16px 0; }
+    #network { width: 85%; height: 560px; border: 1px solid #d0d7de; margin: 18px auto; border-radius:10px; background:#fff;}
+    .controls { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    button { padding:10px 14px; border-radius:8px; border:none; cursor:pointer; background:#1a73e8; color:#fff; font-weight:600; }
+    .secondary { background:#34a853; }
+    .danger { background:#ea4335; }
+    .muted { background:#6c757d; }
+    .note { color:#666; margin-top:8px; }
+    .small { font-size:13px; color:#555; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Routing Simulator — Topology Builder</h1>
+    <div>
+      <a href="/visualize" style="text-decoration:none; color:#1a73e8; font-weight:600;">Visualize Last Run</a>
+    </div>
+  </header>
+
+  <div class="controls">
+    <button onclick="addNode()">➕ Add Router</button>
+    <button onclick="promptConnect()">🔗 Add Link</button>
+    <button onclick="removeNode()">🗑 Remove Router</button>
+    <button onclick="removeEdge()">❌ Remove Link</button>
+    <button onclick="onSimulate()">▶ Generate Routing Table</button>
+    <button onclick="resetAll()" class="muted">🔄 Reset</button>
+  </div>
+
+  <div id="network"></div>
+  <div class="note">Tip: select exactly two routers before clicking "Add Link". Double-click a link's label to edit its weight (in the prompt).</div>
+
+  <script>
+    var nodes = new vis.DataSet([]);
+    var edges = new vis.DataSet([]);
+
+    var container = document.getElementById("network");
+    var data = { nodes: nodes, edges: edges };
+    var options = {
+      interaction: { multiselect: true },
+      manipulation: false,
+      edges: { color: "#444", smooth: false, font: { align: "top" } },
+      physics: { enabled: false },
+      layout: { improvedLayout: true }
+    };
+    var network = new vis.Network(container, data, options);
+
+    let nodeId = 0;
+    function addNode(){
+      nodes.add({ id: nodeId, label: "R"+nodeId, shape:"circle", color:"#66ccff" });
+      nodeId++;
+    }
+    function removeNode(){
+      let sel = network.getSelectedNodes();
+      if(sel.length>0) nodes.remove(sel);
+    }
+    function promptConnect(){
+      let sel = network.getSelectedNodes();
+      if(sel.length !== 2){
+        Swal.fire({ icon: "info", title: "Select exactly TWO routers", timer: 1600, showConfirmButton:false });
+        return;
+      }
+      Swal.fire({
+        title: 'Enter link weight (cost)',
+        input: 'text',
+        inputValue: '1',
+        inputValidator: (value) => {
+          if(!value || isNaN(value)) return 'Enter a numeric weight';
+        },
+        showCancelButton: true
+      }).then(result=>{
+        if(result.isConfirmed){
+          edges.add({ from: sel[0], to: sel[1], label: result.value, weight: parseFloat(result.value) });
+        }
+      });
+    }
+    function removeEdge(){
+      let sel = network.getSelectedEdges();
+      if(sel.length>0) edges.remove(sel);
+    }
+    function resetAll(){
+      nodes.clear(); edges.clear(); nodeId=0;
+    }
+
+    // allow double-click on edge to edit weight
+    network.on("doubleClick", function(params){
+      if(params.edges && params.edges.length===1){
+        let eId = params.edges[0];
+        let e = edges.get(eId);
+        Swal.fire({
+          title: `Edit weight for ${e.from} ↔ ${e.to}`,
+          input: 'text',
+          inputValue: e.weight || e.label || '1',
+          inputValidator: (v)=> isNaN(v) ? 'Must be numeric' : null,
+          showCancelButton: true
+        }).then(res=>{
+          if(res.isConfirmed){
+            edges.update({ id: eId, label: res.value, weight: parseFloat(res.value) });
+          }
+        });
+      }
+    });
+
+    // Q1-A popup selection when user clicks simulate
+    function onSimulate(){
+      if(nodes.length === 0){
+        Swal.fire({icon:"info", title:"Add at least one router", timer: 1400, showConfirmButton:false});
+        return;
+      }
+      Swal.fire({
+        title: 'Pick algorithm',
+        text: 'Choose which algorithm to run for generating routing tables:',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'OSPF (Dijkstra)',
+        cancelButtonText: 'Other',
+        showDenyButton: true,
+        denyButtonText: 'RIP (Bellman-Ford)',
+        showCloseButton: true,
+        didOpen: () => {
+          // style small
+        }
+      }).then((result) => {
+        // Map buttons:
+        // confirm -> Dijkstra
+        // deny -> BellmanFord
+        // cancel -> Ask Both
+        let choice = null;
+        if (result.isConfirmed) choice = 'dijkstra';
+        else if (result.isDenied) choice = 'bellmanford';
+        else if (result.isDismissed) {
+          // prompt both specifically
+          Swal.fire({
+            title: 'Run both algorithms?',
+            showCancelButton: true,
+            confirmButtonText: 'Run BOTH',
+            cancelButtonText: 'Cancel'
+          }).then(r=>{
+            if(r.isConfirmed) sendSim('both');
+          });
+          return;
+        }
+        if(choice) sendSim(choice);
+      });
+    }
+
+    function sendSim(algorithm){
+      const nodeArr = nodes.get();
+      const edgeArr = edges.get().map(e => ({
+        id: e.id,
+        from: e.from,
+        to: e.to,
+        weight: e.weight !== undefined ? e.weight : (isNaN(parseFloat(e.label)) ? 1 : parseFloat(e.label))
+      }));
+      fetch("/simulate", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ nodes: nodeArr, edges: edgeArr, algorithm: algorithm })
+      })
+      .then(async res => {
+        if(res.status === 422){
+          const body = await res.json();
+          // Q2-A: SweetAlert modal for invalid weight
+          Swal.fire({ icon: "error", title: "Invalid weight", text: body.error || "Invalid weights for Dijkstra.", footer: "Dijkstra requires non-negative weights." });
+          return;
+        }
+        if(!res.ok){
+          const body = await res.json().catch(()=>({error:'Unknown server error'}));
+          Swal.fire({ icon:"error", title:"Error", text: body.error || "Server error" });
+          return;
+        }
+        return res.json();
+      })
+      .then(data=>{
+        if(data && data.redirect){
+          window.location.href = data.redirect;
+        }
+      })
+      .catch(err=>{
+        Swal.fire({ icon:"error", title:"Network Error", text: err.message || err });
+      });
+    }
+
+  </script>
+</body>
+</html>
